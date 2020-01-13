@@ -356,22 +356,118 @@ function showCurrentStep() {
     );
     domObject.style.display = 'block';
   });
-  if (currentStepNotInView()) {
+  const currentViewbox = canvas.viewbox();
+  if (stepNotInView(currentStep, currentViewbox)) {
     focusOnActiveActivity();
   }
 }
 
-function currentStepNotInView() {
-  const currentViewbox = canvas.viewbox();
+function stepNotInView(stepNumber, viewBox) {
 
-  const step = replaySteps[currentStep];
+ let stepBounds = createViewboxForStep(stepNumber);
+
+  if (viewBox.x <= stepBounds.x && viewBox.y <= stepBounds.y) {
+    if (
+      viewBox.x + viewBox.width >
+      stepBounds.x + stepBounds.width
+    ) {
+      if (
+        viewBox.y + viewBox.height >
+        stepBounds.y + stepBounds.height
+      ) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+function focusOnActiveActivity() {
+  const stepViewBoxes = [];
+  for(let i=0; i<=currentStep; i++) {
+    stepViewBoxes[i] = createViewboxForStep(i);
+  }
+
+  const stepViewbox = stepViewBoxes[currentStep];
+  if(currentStep > 0) {
+    for(let j = currentStep -1; j>=0; j--) {
+      const additionalStapViewBox = stepViewBoxes[j];
+
+      const stepViewboxRight = stepViewbox.x + stepViewbox.width;
+      const additionalStapViewBoxRight = additionalStapViewBox.x + additionalStapViewBox.width;
+      const stepViewboxDown = stepViewbox.y + stepViewbox.height;
+      const additionalStapViewBoxDown = additionalStapViewBox.y + additionalStapViewBox.height;
+
+      // if the previous step is further left,
+      // move the x-value as far to the left as possible to include the step
+      if(stepViewbox.x > additionalStapViewBox.x) {
+        // Check if the whole additional step can be included
+        if(stepViewbox.width + stepViewbox.x - additionalStapViewBox.x < initialViewbox.width) {
+          stepViewbox.width += (stepViewbox.x - additionalStapViewBox.x);
+          stepViewbox.x = additionalStapViewBox.x;
+        }
+        // Move the x as much as possible to include the additional step
+        else {
+          stepViewbox.x -= (initialViewbox.width - stepViewbox.width);
+          stepViewbox.width = initialViewbox.width;
+        }
+      } 
+      // if the previous step is further right,
+      // move the width as far to the right as possible to include the step
+      if( stepViewboxRight < additionalStapViewBoxRight ) {
+        // Check if the whole additional step can be included
+        if(stepViewbox.width + stepViewboxRight - additionalStapViewBoxRight < initialViewbox.width) {
+          stepViewbox.width = additionalStapViewBoxRight;
+        }
+        // Move the width much as possible to include the additional step
+        else {
+          stepViewbox.width = initialViewbox.width;
+        }
+      }
+      // if the previous step is further up,
+      // move the y-value as far to up as possible to include the step
+      if(stepViewbox.y > additionalStapViewBox.y) {
+        // Check if the whole additional step can be included
+        if(stepViewbox.height + stepViewbox.y - additionalStapViewBox.y < initialViewbox.height) {
+          stepViewbox.height += (stepViewbox.y - additionalStapViewBox.y);
+          stepViewbox.y = additionalStapViewBox.y;
+        }
+        // Move the y as much as possible to include the additional step
+        else {
+          stepViewbox.y -= (initialViewbox.height - stepViewbox.height);
+          stepViewbox.height = initialViewbox.height;
+        }
+      }
+      // if the previous step is further down,
+      // move the height as far to the bottom as possible to include the step
+      if( stepViewboxDown < additionalStapViewBoxDown ) {
+        // Check if the whole additional step can be included
+        if(stepViewbox.height + stepViewboxDown - additionalStapViewBoxDown < initialViewbox.height) {
+          stepViewbox.height = additionalStapViewBoxDown;
+        }
+        // Move the height much as possible to include the additional step
+        else {
+          stepViewbox.height = initialViewbox.height;
+        }
+      }
+    }
+  }
+
+  stepViewbox.width = initialViewbox.width;
+  stepViewbox.height = initialViewbox.height;
+
+  canvas.viewbox(stepViewbox);
+}
+
+function createViewboxForStep(stepNumber) {
+  const step = replaySteps[stepNumber];
+  const initialElement = step.source;
 
   let elements = [];
   step.targets.forEach(target => {
     elements.push(target);
   });
 
-  let initialElement = step.source;
   let stepBounds = {
     x: initialElement.x,
     y: initialElement.y,
@@ -394,38 +490,5 @@ function currentStepNotInView() {
       }
     }
   });
-
-  if (currentViewbox.x < stepBounds.x && currentViewbox.y < stepBounds.y) {
-    if (
-      currentViewbox.x + currentViewbox.width >
-      stepBounds.x + stepBounds.width
-    ) {
-      if (
-        currentViewbox.y + currentViewbox.height >
-        stepBounds.y + stepBounds.height
-      ) {
-        return false;
-      }
-    }
-  }
-  return true;
-}
-
-function focusOnActiveActivity() {
-  const step = replaySteps[currentStep];
-  const activitiesInStep = step.activities;
-  const activityToFocusOn = activitiesInStep[0];
-  const elX = activityToFocusOn.waypoints[0].x - initialViewbox.width / 2;
-  const elY = activityToFocusOn.waypoints[0].y - initialViewbox.height / 2;
-  let stepViewbox = {
-    x: elX,
-    y: elY,
-    height: initialViewbox.height,
-    width: initialViewbox.width,
-    scale: initialViewbox.scale,
-    outer: initialViewbox.outer,
-    inner: initialViewbox.inner
-  };
-
-  canvas.viewbox(stepViewbox);
+  return stepBounds;
 }
