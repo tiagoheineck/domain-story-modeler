@@ -103,7 +103,9 @@ export default function DomainStoryRenderer(eventBus, styles, canvas, textRender
         {},
         textRenderer.getExternalStyle(),
         {
-          fill: '#42aebb',
+          stroke: '#003d67',
+          'stroke-width': '1px',
+          fill: 'white',
           fontSize: 150,
           position: 'absolute',
           fontFamily: 'Courier'
