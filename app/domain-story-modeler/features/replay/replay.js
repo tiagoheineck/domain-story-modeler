@@ -4,7 +4,8 @@ import { CONNECTION, GROUP } from '../../language/elementTypes';
 import {
   getActivitesFromActors,
   getAllCanvasObjects,
-  wasInitialized
+  wasInitialized,
+  getAllGroups
 } from '../../language/canvasElementRegistry';
 import { traceActivities } from './initializeReplay';
 
@@ -168,6 +169,7 @@ export function isPlaying() {
 export function isStoryConsecutivelyNumbered(replaySteps) {
   errorStep = [];
   let complete = true;
+  console.log(replaySteps);
   for (let i = 0; i < replaySteps.length; i++) {
     if (!replaySteps[i].activities[0]) {
       complete = false;
@@ -179,40 +181,45 @@ export function isStoryConsecutivelyNumbered(replaySteps) {
   return complete;
 }
 
-// get all elements, that are supposed to be shown in the current step
 export function getAllShown(stepsUntilNow) {
   let shownElements = [];
 
   // for each step until the current one, add all referenced elements to the list of shown elements
   stepsUntilNow.forEach(step => {
 
-    // add the source of the step and their annotations to the shown elements
-    shownElements.push(step.source);
-    if (step.source.outgoing) {
-      step.source.outgoing.forEach(out => {
-        if (out.type.includes(CONNECTION)) {
-          shownElements.push(out, out.target);
-        }
-      });
-    }
+    if (step.group) {
+      shownElements.push(step.group);
+    } else {
 
-    // add the target of the step and their annotations to the shown elements
-    step.targets.forEach(target => {
-      shownElements.push(target);
-      if (target.outgoing) {
-        target.outgoing.forEach(out => {
+      // add the source of the step and their annotations to the shown elements
+      shownElements.push(step.source);
+      if (step.source.outgoing) {
+        step.source.outgoing.forEach(out => {
           if (out.type.includes(CONNECTION)) {
             shownElements.push(out, out.target);
           }
         });
       }
 
-      // add each activity to the step
-      step.activities.forEach(activity => {
-        shownElements.push(activity);
+      // add the target of the step and their annotations to the shown elements
+      step.targets.forEach(target => {
+        shownElements.push(target);
+        if (target.outgoing) {
+          target.outgoing.forEach(out => {
+            if (out.type.includes(CONNECTION)) {
+              shownElements.push(out, out.target);
+            }
+          });
+        }
+
+        // add each activity to the step
+        step.activities.forEach(activity => {
+          shownElements.push(activity);
+        });
       });
-    });
+    }
   });
+
   return shownElements;
 }
 
@@ -336,13 +343,16 @@ function showCurrentStep() {
   }
 
   allObjects = getAllCanvasObjects(canvas);
-
+  getAllGroups().forEach(group => {
+    allObjects.push(group);
+  });
   let shownElements = getAllShown(stepsUntilNow);
 
   let notShownElements = getAllNotShown(allObjects, shownElements);
 
   // hide all elements, that are not to be shown
   notShownElements.forEach(element => {
+    console.log(element);
     let domObject = document.querySelector(
       '[data-element-id=' + element.id + ']'
     );
@@ -350,6 +360,7 @@ function showCurrentStep() {
   });
 
   shownElements.forEach(element => {
+    console.log(element);
     let domObject = document.querySelector(
       '[data-element-id=' + element.id + ']'
     );

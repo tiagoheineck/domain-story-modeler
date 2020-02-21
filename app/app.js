@@ -1,6 +1,7 @@
 'use strict';
 
 import './domain-story-modeler/util/MathExtensions';
+import './domain-story-modeler/util/ArrayExtensions';
 import DomainStoryModeler from './domain-story-modeler';
 import SearchPad from '../node_modules/diagram-js/lib/features/search-pad/SearchPad';
 import EventBus from 'diagram-js/lib/core/EventBus';
