@@ -169,7 +169,6 @@ export function isPlaying() {
 export function isStoryConsecutivelyNumbered(replaySteps) {
   errorStep = [];
   let complete = true;
-  console.log(replaySteps);
   for (let i = 0; i < replaySteps.length; i++) {
     if (!replaySteps[i].activities[0]) {
       complete = false;
@@ -352,7 +351,6 @@ function showCurrentStep() {
 
   // hide all elements, that are not to be shown
   notShownElements.forEach(element => {
-    console.log(element);
     let domObject = document.querySelector(
       '[data-element-id=' + element.id + ']'
     );
@@ -360,7 +358,6 @@ function showCurrentStep() {
   });
 
   shownElements.forEach(element => {
-    console.log(element);
     let domObject = document.querySelector(
       '[data-element-id=' + element.id + ']'
     );
